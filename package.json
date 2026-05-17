@@ -1,0 +1,49 @@
+{
+  "name": "vapex-backend",
+  "version": "1.0.0",
+  "description": "VAPEX IoT Vape Device Management Backend API",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node src/app.js",
+    "seed": "node src/utils/seed.js"
+  },
+  "keywords": [
+    "vape",
+    "iot",
+    "mqtt",
+    "websocket",
+    "api"
+  ],
+  "author": "VAPEX Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.2.0",
+    "mongoose": "^8.3.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "mqtt": "^5.5.0",
+    "ws": "^8.16.0",
+    "socket.io": "^4.7.5",
+    "joi": "^17.12.3",
+    "dotenv": "^16.4.5",
+    "pino": "^8.19.0",
+    "pino-pretty": "^11.0.0",
+    "uuid": "^9.0.1",
+    "node-cron": "^3.0.3",
+    "compression": "^1.7.4",
+    "express-validator": "^7.0.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

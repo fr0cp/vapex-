@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#080b0f">
+  <title>VAPEX — Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/js/dashboard.js" defer></script>
+</head>
+<body>
+
+<!-- ████ TOAST ████ -->
+<div id="vxToast" role="alert" aria-live="assertive"></div>
+
+<!-- ████ OFFLINE BANNER ████ -->
+<div id="connBanner" role="status" aria-live="polite" hidden>
+  <span class="banner-icon">⚡</span>
+  <span id="bannerMsg">Server offline — start MongoDB and run npm run seed</span>
+  <button class="banner-close" id="bannerClose" aria-label="Dismiss">✕</button>
+</div>
+
+<!-- ████ APP SHELL ████ -->
+<div class="shell" id="shell">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" role="navigation" aria-label="Primary navigation">
+    <div class="sidebar-top">
+      <div class="brand">
+        <div class="brand-mark">VX</div>
+        <span class="brand-name">VAPEX</span>
+      </div>
+
+      <nav class="nav-links" role="tablist">
+        <button class="nav-btn active" data-tab="home" role="tab" aria-selected="true">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="nav-label">Home</span>
+          <span class="nav-pip"></span>
+        </button>
+        <button class="nav-btn" data-tab="analytics" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="nav-label">Analytics</span>
+          <span class="nav-pip"></span>
+        </button>
+        <button class="nav-btn" data-tab="smart" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span class="nav-label">Smart</span>
+          <span class="nav-pip"></span>
+        </button>
+        <button class="nav-btn" data-tab="goals" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <span class="nav-label">Goals</span>
+          <span class="nav-pip"></span>
+        </button>
+        <button class="nav-btn" data-tab="find" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span class="nav-label">Find</span>
+          <span class="nav-pip"></span>
+        </button>
+        <button class="nav-btn" data-tab="settings" role="tab" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="nav-label">Profile</span>
+          <span class="nav-pip"></span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="conn-status" id="connStatus">
+        <span class="conn-dot" id="connDot"></span>
+        <span class="conn-label" id="connLabel">–</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ CONTENT AREA ══ -->
+  <main class="content-area">
+
+    <!-- ─────────────────── HOME ─────────────────── -->
+    <section class="tab-panel active" data-panel="home" role="tabpanel" aria-label="Home">
+
+      <!-- Device header -->
+      <header class="page-top">
+        <div class="page-top-left">
+          <p class="overline">Active device</p>
+          <h1 class="device-name" id="dname">Loading…</h1>
+          <div class="device-status-row">
+            <span class="status-led" id="statusLed"></span>
+            <span class="status-text" id="deviceStatus">Syncing…</span>
+          </div>
+        </div>
+        <div class="page-top-right">
+          <div class="battery-pod" aria-label="Battery">
+            <div class="bat-shell">
+              <div class="bat-fill" id="bf"></div>
+              <div class="bat-nub"></div>
+            </div>
+            <span class="bat-pct" id="bt">--%</span>
+          </div>
+          <div class="mode-chip" id="modeBadge">ECO</div>
+        </div>
+      </header>
+
+      <!-- Coil warning -->
+      <div class="alert-bar" id="coilWarn" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div>
+          <strong>Coil needs attention</strong>
+          <span>Estimated life: <b id="coilEstWarn">--</b> days remaining</span>
+        </div>
+      </div>
+
+      <!-- Hero: puff button + quick stats -->
+      <div class="hero-grid">
+        <button class="puff-btn" id="pc" aria-label="Record a puff" title="Tap to record puff">
+          <div class="puff-rings">
+            <span class="pr pr1"></span>
+            <span class="pr pr2"></span>
+            <span class="pr pr3"></span>
+          </div>
+          <div class="puff-core">
+            <span class="puff-num" id="puffNumber">0</span>
+            <span class="puff-sub">puffs today</span>
+          </div>
+        </button>
+
+        <div class="quick-stats">
+          <div class="qs-item">
+            <span class="qs-lbl">Session</span>
+            <span class="qs-val" id="sh">0h</span>
+          </div>
+          <div class="qs-divider"></div>
+          <div class="qs-item">
+            <span class="qs-lbl">Nicotine</span>
+            <span class="qs-val" id="nm">0mg</span>
+          </div>
+          <div class="qs-divider"></div>
+          <div class="qs-item">
+            <span class="qs-lbl">Battery</span>
+            <span class="qs-val" id="bp">--%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily progress -->
+      <div class="progress-row">
+        <div class="progress-track" aria-label="Daily puff progress">
+          <div class="progress-fill" id="pf"></div>
+        </div>
+        <button class="txt-btn" id="resetPuffsBtn" aria-label="Reset today's puffs">Reset</button>
+      </div>
+
+      <!-- Active liquid -->
+      <article class="card liquid-card">
+        <div class="card-head">
+          <div>
+            <p class="card-overline">Active liquid</p>
+            <h2 class="card-title" id="fn">Loading…</h2>
+            <p class="card-sub" id="fm">Fetching bottle data…</p>
+          </div>
+          <button class="ghost-btn" id="changeFlavorBtn" aria-label="Change active flavor">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+            Change
+          </button>
+        </div>
+        <div class="liquid-meter">
+          <div class="liquid-track"><div class="liquid-fill" id="liqFill"></div></div>
+          <span class="liquid-pct" id="liqPct">--%</span>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-item"><b id="liqDay">0ml</b><span>Today</span></div>
+          <div class="mini-item"><b id="liqWeek">0ml</b><span>Week</span></div>
+          <div class="mini-item"><b id="liqRem">--</b><span>Remaining</span></div>
+        </div>
+      </article>
+
+      <!-- Rings row -->
+      <div class="rings-row">
+
+        <!-- Nicotine ring -->
+        <article class="card ring-card">
+          <p class="card-overline">Nicotine</p>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="rt" cx="60" cy="60" r="46"/>
+              <circle class="rf accent-stroke" cx="60" cy="60" r="46" id="nicRingPath" stroke-dasharray="289" stroke-dashoffset="289"/>
+            </svg>
+            <div class="ring-val">
+              <span id="nicVal">0</span>
+              <small>mg</small>
+            </div>
+          </div>
+          <div class="ring-mini">
+            <div><b id="nicDay">0mg</b><span>Today</span></div>
+            <div><b id="nicWeek">0mg</b><span>Week</span></div>
+            <div><b id="nicMonth">0mg</b><span>Month</span></div>
+          </div>
+        </article>
+
+        <!-- Coil ring -->
+        <article class="card ring-card">
+          <p class="card-overline">Coil life</p>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="rt" cx="60" cy="60" r="46"/>
+              <circle class="rf warn-stroke" cx="60" cy="60" r="46" id="coilRingPath" stroke-dasharray="289" stroke-dashoffset="289"/>
+            </svg>
+            <div class="ring-val">
+              <span id="coilVal">--</span>
+              <small>left</small>
+            </div>
+          </div>
+          <div class="ring-mini">
+            <div><b id="coilPuffs">--</b><span>Puffs</span></div>
+            <div><b id="coilDays">--</b><span>Days</span></div>
+            <div><b id="coilType">--</b><span>Type</span></div>
+          </div>
+          <span class="coil-badge" id="coilBadge" hidden>Change soon</span>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ─────────────────── ANALYTICS ─────────────────── -->
+    <section class="tab-panel" data-panel="analytics" role="tabpanel" aria-label="Analytics">
+      <header class="page-top">
+        <div class="page-top-left">
+          <p class="overline">Usage data</p>
+          <h1>Analytics</h1>
+        </div>
+        <div class="mode-chip neutral" id="trendLabel">Live</div>
+      </header>
+
+      <article class="card chart-card">
+        <div class="chart-head">
+          <p class="card-overline">Weekly rhythm</p>
+          <div class="chart-legend">
+            <span class="legend-dot accent-bg"></span>
+            <span>Today</span>
+          </div>
+        </div>
+        <div class="bar-chart" id="bars" aria-label="Weekly puff chart"></div>
+      </article>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-label">Today</span>
+          <strong class="stat-val" id="tp">0</strong>
+          <span class="stat-unit">puffs</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Daily avg</span>
+          <strong class="stat-val" id="da">0</strong>
+          <span class="stat-unit">puffs</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">This week</span>
+          <strong class="stat-val" id="wt">0</strong>
+          <span class="stat-unit">total</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Charge cycles</span>
+          <strong class="stat-val" id="baCycles">0</strong>
+          <span class="stat-unit">times</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- ─────────────────── SMART MODES ─────────────────── -->
+    <section class="tab-panel" data-panel="smart" role="tabpanel" aria-label="Smart modes">
+      <header class="page-top">
+        <div class="page-top-left">
+          <p class="overline">Device intelligence</p>
+          <h1>Smart Modes</h1>
+        </div>
+      </header>
+
+      <div class="mode-list" id="smartModes" role="radiogroup" aria-label="Smart mode selection">
+        <button class="mode-card" data-mode="eco" role="radio" aria-checked="false">
+          <div class="mode-left">
+            <div class="mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 22a10 10 0 100-20 10 10 0 000 20z"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="mode-text">
+              <strong>Eco</strong>
+              <span>Lower power, longer battery life</span>
+            </div>
+          </div>
+          <div class="mode-check"></div>
+        </button>
+
+        <button class="mode-card" data-mode="flavor" role="radio" aria-checked="false">
+          <div class="mode-left">
+            <div class="mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 22a7 7 0 007-7c0-2-1-3.9-3-5.5s-3.5-4-4-6c0 0-5.5 5-3.5 11A7 7 0 0012 22z"/></svg>
+            </div>
+            <div class="mode-text">
+              <strong>Flavor Boost</strong>
+              <span>Warmer profile, stronger taste</span>
+            </div>
+          </div>
+          <div class="mode-check"></div>
+        </button>
+
+        <button class="mode-card" data-mode="cloud" role="radio" aria-checked="false">
+          <div class="mode-left">
+            <div class="mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+            </div>
+            <div class="mode-text">
+              <strong>Cloud Chaser</strong>
+              <span>Higher output, dense vapor</span>
+            </div>
+          </div>
+          <div class="mode-check"></div>
+        </button>
+
+        <button class="mode-card" data-mode="stealth" role="radio" aria-checked="false">
+          <div class="mode-left">
+            <div class="mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </div>
+            <div class="mode-text">
+              <strong>Stealth</strong>
+              <span>Quiet, minimal vapor</span>
+            </div>
+          </div>
+          <div class="mode-check"></div>
+        </button>
+
+        <button class="mode-card" data-mode="auto" role="radio" aria-checked="false">
+          <div class="mode-left">
+            <div class="mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            </div>
+            <div class="mode-text">
+              <strong>Auto Smart</strong>
+              <span>AI-adaptive to your usage</span>
+            </div>
+          </div>
+          <div class="mode-check"></div>
+        </button>
+      </div>
+    </section>
+
+    <!-- ─────────────────── GOALS ─────────────────── -->
+    <section class="tab-panel" data-panel="goals" role="tabpanel" aria-label="Goals">
+      <header class="page-top">
+        <div class="page-top-left">
+          <p class="overline">Reduction plan</p>
+          <h1>Goals</h1>
+        </div>
+        <div class="mode-chip" id="goalStatus">On track</div>
+      </header>
+
+      <!-- Nicotine goal -->
+      <article class="card goal-card">
+        <div class="goal-head">
+          <p class="card-overline">Nicotine reduction</p>
+          <div class="goal-badge" id="goalBadge">Active</div>
+        </div>
+        <h2 class="goal-title" id="goalTitle">No active plan</h2>
+        <div class="goal-bar-wrap">
+          <div class="goal-track"><div class="goal-fill" id="goalFill"></div></div>
+          <span class="goal-pct" id="goalPct">0%</span>
+        </div>
+        <div class="goal-stats">
+          <div><b id="goalCurrent">0mg</b><span>Current</span></div>
+          <div><b id="goalDays">0</b><span>Days active</span></div>
+          <div><b id="goalSaved">0mg</b><span>Saved</span></div>
+        </div>
+        <p class="next-step" id="goalNext">Next step: --</p>
+      </article>
+
+      <!-- Puff limit -->
+      <article class="card goal-card">
+        <div class="goal-head">
+          <p class="card-overline">Daily puff limit</p>
+          <div class="mode-chip neutral" id="limitStatus">0 / 200</div>
+        </div>
+        <h2 class="goal-title" id="limitTitle">200 puffs/day</h2>
+        <div class="goal-bar-wrap">
+          <div class="goal-track"><div class="goal-fill" id="limitFill"></div></div>
+        </div>
+        <div class="limit-editor">
+          <label class="limit-label" for="puffLimitInput">Set daily limit</label>
+          <div class="limit-controls">
+            <input type="number" id="puffLimitInput" min="50" max="1000" step="10" value="200" aria-label="Daily puff limit">
+            <button class="primary-btn" id="savePuffLimitBtn" aria-label="Save limit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Save
+            </button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─────────────────── FIND ─────────────────── -->
+    <section class="tab-panel" data-panel="find" role="tabpanel" aria-label="Find device">
+      <header class="page-top">
+        <div class="page-top-left">
+          <p class="overline">Device locator</p>
+          <h1>Find</h1>
+        </div>
+      </header>
+
+      <article class="card find-card">
+        <div class="radar-stage" aria-hidden="true">
+          <div class="radar-base">
+            <div class="radar-sweep"></div>
+            <div class="radar-circle rc1"></div>
+            <div class="radar-circle rc2"></div>
+            <div class="radar-circle rc3"></div>
+            <div class="radar-cross hc"></div>
+            <div class="radar-cross vc"></div>
+            <div class="radar-blip" id="radarBlip"></div>
+          </div>
+        </div>
+        <div class="find-info">
+          <h2>Locate device</h2>
+          <p class="card-sub" id="findStatus">Fetching location…</p>
+          <button class="primary-btn" id="ringDeviceBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            Ring device
+          </button>
+          <p class="ring-status" id="ringStatus" hidden></p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─────────────────── SETTINGS ─────────────────── -->
+    <section class="tab-panel" data-panel="settings" role="tabpanel" aria-label="Profile and settings">
+      <header class="page-top">
+        <div class="page-top-left">
+          <p class="overline">Account</p>
+          <h1>Profile</h1>
+        </div>
+      </header>
+
+      <!-- User card -->
+      <article class="card profile-card">
+        <div class="avatar-wrap">
+          <div class="avatar" id="ava">VX</div>
+          <div class="avatar-glow"></div>
+        </div>
+        <h2 id="pname">VAPEX User</h2>
+        <p class="card-sub" id="pmeta">Member profile</p>
+      </article>
+
+      <!-- Cloud sync -->
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <p class="card-overline">Cloud profile</p>
+            <h3>Sync &amp; backup</h3>
+            <p class="card-sub" id="cloudStatus">Last sync: never</p>
+          </div>
+          <button class="ghost-btn" id="syncCloudBtn" aria-label="Sync to cloud">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Sync now
+          </button>
+        </div>
+      </article>
+
+      <!-- Preferences -->
+      <div class="pref-list" role="list">
+        <button class="pref-row" data-toggle="notif" role="listitem" aria-label="Toggle notifications">
+          <div class="pref-left">
+            <div class="pref-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <div>
+              <strong>Notifications</strong>
+              <span>Alerts and reminders</span>
+            </div>
+          </div>
+          <div class="toggle-sw on" role="switch" aria-checked="true"><div class="toggle-thumb"></div></div>
+        </button>
+
+        <button class="pref-row" data-toggle="lock" role="listitem" aria-label="Toggle child lock">
+          <div class="pref-left">
+            <div class="pref-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <div>
+              <strong>Child lock</strong>
+              <span>Prevent accidental use</span>
+            </div>
+          </div>
+          <div class="toggle-sw on" role="switch" aria-checked="true"><div class="toggle-thumb"></div></div>
+        </button>
+
+        <button class="pref-row" data-toggle="health" role="listitem" aria-label="Toggle health mode">
+          <div class="pref-left">
+            <div class="pref-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </div>
+            <div>
+              <strong>Health mode</strong>
+              <span>Nicotine reduction guidance</span>
+            </div>
+          </div>
+          <div class="toggle-sw on" role="switch" aria-checked="true"><div class="toggle-thumb"></div></div>
+        </button>
+      </div>
+
+      <!-- Logout -->
+      <button class="danger-btn" id="logoutBtn" aria-label="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
