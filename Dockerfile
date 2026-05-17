@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy source
-COPY src/ ./src/
+# Copy all source files
+COPY . .
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -18,4 +18,4 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 
-CMD ["node", "src/app.js"]
+CMD ["node", "server.js"]
